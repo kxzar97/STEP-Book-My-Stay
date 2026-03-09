@@ -1,3 +1,4 @@
+
 class SuiteRoom extends Room {
 
     public SuiteRoom() {
