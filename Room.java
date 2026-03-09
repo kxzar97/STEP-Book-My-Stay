@@ -17,7 +17,7 @@ abstract class Room {
         System.out.println("Beds: " + beds);
         System.out.println("Size: " + size + " sqft");
         System.out.println("Price per night: " + price);
-        System.out.println("Available: " + available);
+        System.out.println("Available Rooms: " + available);
         System.out.println();
     }
 }
