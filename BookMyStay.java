@@ -2,16 +2,14 @@ public class BookMyStay {
 
     public static void main(String[] args) {
 
-        RoomInventory inventory = new RoomInventory();
+        BookingRequestQueue queue = new BookingRequestQueue();
 
-        Room[] rooms = {
-                new SingleRoom(),
-                new DoubleRoom(),
-                new SuiteRoom()
-        };
+        // Guest booking requests
+        queue.addRequest(new Reservation("Abhi", "Single"));
+        queue.addRequest(new Reservation("Subha", "Double"));
+        queue.addRequest(new Reservation("Vanmathi", "Suite"));
 
-        SearchService searchService = new SearchService(inventory);
-
-        searchService.displayAvailableRooms(rooms);
+        // Process queue
+        queue.processRequests();
     }
 }
