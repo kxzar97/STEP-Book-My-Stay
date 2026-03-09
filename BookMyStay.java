@@ -1,20 +1,27 @@
 /**
  * BookMyStay
  *
- * This class serves as the entry point for the Hotel Booking application.
- * It demonstrates how a Java program begins execution and produces console output.
- * The program prints a welcome message along with the application name and version.
+ * This class demonstrates Hostel Room Initialization using domain models before introducing centralized inventory management.
+ * Availability is represented using simple variables to highlight limitations.
  *
  * @author YourName
- * @version 1.0
+ * @version 2.0
  */
 public class BookMyStay {
     public static void main(String[] args) {
-        String appName = "Hotel Booking Booking Management System";
-        String appVersion = "v1.0";
 
-        System.out.println("Welcome to " + appName + "!");
-        System.out.println("Application Version: " + appVersion);
-        System.out.println("System initialized successfully.");
+        int singleAvailable = 5;
+        int doubleAvailable = 3;
+        int suiteAvailable = 2;
+
+        SingleRoom single = new SingleRoom();
+        DoubleRoom dbl = new DoubleRoom();
+        SuiteRoom suite = new SuiteRoom();
+
+        System.out.println("Hotel Room Initialization\n");
+
+        single.displayRoom(singleAvailable);
+        dbl.displayRoom(doubleAvailable);
+        suite.displayRoom(suiteAvailable);
     }
 }
