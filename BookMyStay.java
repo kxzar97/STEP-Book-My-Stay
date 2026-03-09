@@ -4,14 +4,14 @@ public class BookMyStay {
 
         RoomInventory inventory = new RoomInventory();
 
-        SingleRoom single = new SingleRoom();
-        DoubleRoom dbl = new DoubleRoom();
-        SuiteRoom suite = new SuiteRoom();
+        Room[] rooms = {
+                new SingleRoom(),
+                new DoubleRoom(),
+                new SuiteRoom()
+        };
 
-        System.out.println("Hotel Room Inventory Status\n");
+        SearchService searchService = new SearchService(inventory);
 
-        single.displayRoom(inventory.getAvailability("Single Room"));
-        dbl.displayRoom(inventory.getAvailability("Double Room"));
-        suite.displayRoom(inventory.getAvailability("Suite Room"));
+        searchService.displayAvailableRooms(rooms);
     }
 }
