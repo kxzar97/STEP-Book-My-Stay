@@ -1,5 +1,5 @@
 /**
- * HotelBookingApp
+ * BookMyStay
  *
  * This class serves as the entry point for the Hotel Booking application.
  * It demonstrates how a Java program begins execution and produces console output.
@@ -8,13 +8,13 @@
  * @author YourName
  * @version 1.0
  */
-public class HotelBookingApp {
+public class BookMyStay {
     public static void main(String[] args) {
-        String appName = "Hotel Booking Application";
+        String appName = "Hotel Booking Booking Management System";
         String appVersion = "v1.0";
 
         System.out.println("Welcome to " + appName + "!");
         System.out.println("Application Version: " + appVersion);
-        System.out.println("Thank you for using our service.");
+        System.out.println("System initialized successfully.");
     }
 }
