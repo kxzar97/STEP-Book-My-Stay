@@ -1,74 +1,157 @@
 import java.util.*;
 
+/**
+ * Hotel Booking Management System
+ * Use Case 11: Concurrent Booking Simulation (Thread Safety)
+ */
 public class BookMyStay {
 
-    /**
-     * CLASS - Room
-     * Stores static characteristics and base price.
-     */
-    static class Room {
-        private String type;
-        private double basePrice;
+    // --- SUPPORTING CLASSES ---
 
-        public Room(String type, double basePrice) {
-            this.type = type;
-            this.basePrice = basePrice;
+    static class Reservation {
+        private String guestName;
+        private String roomType;
+
+        public Reservation(String guestName, String roomType) {
+            this.guestName = guestName;
+            this.roomType = roomType;
         }
 
-        public String getType() { return type; }
-        public double getBasePrice() { return basePrice; }
+        public String getGuestName() { return guestName; }
+        public String getRoomType() { return roomType; }
     }
 
-    /**
-     * CLASS - DynamicPricingService
-     * Use Case 10: Calculates the adjusted price based on seasonal demand.
-     */
-    static class DynamicPricingService {
+    static class RoomInventory {
+        // Shared Mutable State - Inventory shared across threads
+        private Map<String, Integer> inventory = new HashMap<>();
 
-        /**
-         * Calculates final price: Base Price * Multiplier
-         * @param room The room being booked
-         * @param seasonMultiplier e.g., 1.2 for 20% increase during peak season
-         * @return adjusted price
-         */
-        public double calculateAdjustedPrice(Room room, double seasonMultiplier) {
-            return room.getBasePrice() * seasonMultiplier;
+        public void addRooms(String type, int count) {
+            inventory.put(type, count);
         }
 
-        public void displayPriceComparison(Room room, double multiplier) {
-            double adjusted = calculateAdjustedPrice(room, multiplier);
-            System.out.println("Pricing Update for " + room.getType() + ":");
-            System.out.println("  Standard Rate: $" + room.getBasePrice());
-            System.out.println("  Seasonal Rate (" + (int)(multiplier * 100) + "%): $" + adjusted);
-            System.out.println();
+        public int getCount(String type) {
+            return inventory.getOrDefault(type, 0);
+        }
+
+        public void updateCount(String type, int count) {
+            inventory.put(type, count);
+        }
+
+        public void displayInventory() {
+            System.out.println("\nRemaining Inventory:");
+            System.out.println("Single: " + getCount("Single"));
+            System.out.println("Double: " + getCount("Double"));
+            System.out.println("Suite: " + getCount("Suite"));
         }
     }
 
+    static class BookingRequestQueue {
+        // Shared Mutable State - Booking queue shared across threads
+        private Queue<Reservation> queue = new LinkedList<>();
+
+        public void addRequest(Reservation res) {
+            queue.add(res);
+        }
+
+        public Reservation pollRequest() {
+            return queue.poll();
+        }
+
+        public boolean isEmpty() {
+            return queue.isEmpty();
+        }
+    }
+
+    static class RoomAllocationService {
+        public void allocateRoom(Reservation res, RoomInventory inventory) {
+            int currentCount = inventory.getCount(res.getRoomType());
+            if (currentCount > 0) {
+                inventory.updateCount(res.getRoomType(), currentCount - 1);
+                // Expected Output Format
+                System.out.println("Booking confirmed for Guest: " + res.getGuestName() + ", Room ID: " + res.getRoomType() + "-1");
+            }
+        }
+    }
+
+    // --- CORE PROCESSOR (AS PER DOCS) ---
+
     /**
-     * MAIN CLASS - UC10bms
+     * Concurrent Booking Processor
+     * Implements Runnable for multi-threaded execution
      */
+    static class ConcurrentBookingProcessor implements Runnable {
+        private BookingRequestQueue bookingQueue;
+        private RoomInventory inventory;
+        private RoomAllocationService allocationService;
+
+        public ConcurrentBookingProcessor(BookingRequestQueue bookingQueue,
+                                          RoomInventory inventory,
+                                          RoomAllocationService allocationService) {
+            this.bookingQueue = bookingQueue;
+            this.inventory = inventory;
+            this.allocationService = allocationService;
+        }
+
+        @Override
+        public void run() {
+            while (true) {
+                Reservation reservation = null;
+
+                // Synchronized access to ensure only one thread retrieves a request
+                synchronized (bookingQueue) {
+                    if (bookingQueue.isEmpty()) {
+                        break;
+                    }
+                    reservation = bookingQueue.pollRequest();
+                }
+
+                if (reservation != null) {
+                    // Critical section for room allocation and inventory updates
+                    synchronized (inventory) {
+                        allocationService.allocateRoom(reservation, inventory);
+                    }
+                }
+            }
+        }
+    }
+
+    // --- MAIN ENTRY POINT ---
+
     public static void main(String[] args) {
-        System.out.println("Hotel Management System: Dynamic Pricing Engine\n");
+        // Header
+        System.out.println("Concurrent Booking Simulation");
 
-        // 1. Initialize Service
-        DynamicPricingService pricingService = new DynamicPricingService();
+        // 1. Initialize shared resources [cite: 29]
+        RoomInventory inventory = new RoomInventory();
+        inventory.addRooms("Single", 5);
+        inventory.addRooms("Double", 3);
+        inventory.addRooms("Suite", 2);
 
-        // 2. Define Rooms with Base Prices
-        Room single = new Room("Single Room", 1500.0);
-        Room doubleRm = new Room("Double Room", 2500.0);
-        Room suite = new Room("Suite Room", 5000.0);
+        BookingRequestQueue bookingQueue = new BookingRequestQueue();
+        bookingQueue.addRequest(new Reservation("Abhi", "Single"));
+        bookingQueue.addRequest(new Reservation("Vanmathi", "Double"));
+        bookingQueue.addRequest(new Reservation("Kural", "Suite"));
+        bookingQueue.addRequest(new Reservation("Subha", "Single"));
 
-        // 3. Define Seasonal Multipliers (e.g., Holiday Season = 1.25x)
-        double holidayMultiplier = 1.25;
-        double offSeasonMultiplier = 0.90;
+        RoomAllocationService allocationService = new RoomAllocationService();
 
-        // 4. Demonstrate Price Adjustments
-        System.out.println("--- PEAK SEASON RATES ---");
-        pricingService.displayPriceComparison(single, holidayMultiplier);
-        pricingService.displayPriceComparison(doubleRm, holidayMultiplier);
-        pricingService.displayPriceComparison(suite, holidayMultiplier);
+        // 2. Create booking processor tasks [cite: 45]
+        Thread t1 = new Thread(new ConcurrentBookingProcessor(bookingQueue, inventory, allocationService));
+        Thread t2 = new Thread(new ConcurrentBookingProcessor(bookingQueue, inventory, allocationService));
 
-        System.out.println("--- OFF-SEASON DISCOUNT RATES ---");
-        pricingService.displayPriceComparison(suite, offSeasonMultiplier);
+        // 3. Start concurrent processing [cite: 45]
+        t1.start();
+        t2.start();
+
+        try {
+            t1.join();
+            t2.join();
+        } catch (InterruptedException e) {
+            // Error Handling
+            System.out.println("Thread execution interrupted.");
+        }
+
+        // 4. Show remaining inventory [cite: 46]
+        inventory.displayInventory();
     }
 }
