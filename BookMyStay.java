@@ -2,20 +2,7 @@ import java.util.*;
 
 public class BookMyStay {
 
-    // --- FROM PREVIOUS USE CASES ---
-    static class Room {
-        private String type;
-        private double pricePerNight;
-
-        public Room(String type, double pricePerNight) {
-            this.type = type;
-            this.pricePerNight = pricePerNight;
-        }
-
-        public String getType() { return type; }
-        public double getPricePerNight() { return pricePerNight; }
-    }
-
+    // --- REUSABLE COMPONENTS ---
     static class RoomInventory {
         private Map<String, Integer> roomAvailability = new HashMap<>();
         public RoomInventory() {
@@ -27,75 +14,62 @@ public class BookMyStay {
         public void updateAvailability(String type, int count) { roomAvailability.put(type, count); }
     }
 
-    static class Reservation {
-        private String guestName;
-        private String roomType;
-        public Reservation(String guestName, String roomType) {
-            this.guestName = guestName;
-            this.roomType = roomType;
-        }
-        public String getGuestName() { return guestName; }
-        public String getRoomType() { return roomType; }
-    }
-
-    // --- USE CASE 7: BILLING & REVENUE SERVICE ---
     static class BillingService {
         private double totalRevenue = 0.0;
+        public void processPayment(double amount) { totalRevenue += amount; }
+        public double getTotalRevenue() { return totalRevenue; }
+    }
 
-        /**
-         * Generates a bill for a confirmed booking and updates total revenue.
-         */
-        public void generateBill(String guestName, Room room) {
-            double amount = room.getPricePerNight();
-            totalRevenue += amount;
-            System.out.println("Bill generated for " + guestName + ": $" + amount);
+    /**
+     * CLASS - ReportGenerator
+     * Use Case 8: Generates management reports for inventory and revenue.
+     */
+    static class ReportGenerator {
+
+        public void generateInventoryReport(RoomInventory inventory) {
+            System.out.println("--- Current Inventory Report ---");
+            inventory.getRoomAvailability().forEach((type, count) ->
+                    System.out.println(type + " Rooms remaining: " + count));
         }
 
-        public double getTotalRevenue() {
-            return totalRevenue;
+        public void generateRevenueReport(BillingService billing) {
+            System.out.println("\n--- Financial Revenue Report ---");
+            System.out.println("Total Earnings: $" + billing.getTotalRevenue());
+        }
+
+        public void generateFinalSummary(RoomInventory inventory, BillingService billing) {
+            System.out.println("\n==================================");
+            System.out.println("      FINAL BUSINESS SUMMARY      ");
+            System.out.println("==================================");
+            generateInventoryReport(inventory);
+            generateRevenueReport(billing);
+            System.out.println("==================================");
         }
     }
 
     /**
-     * MAIN CLASS - UC7bms
+     * MAIN CLASS - UC8bms
      */
     public static void main(String[] args) {
-        System.out.println("Hotel Billing & Revenue Summary\n");
-
-        // 1. Setup Data
+        // 1. Initialize System
         RoomInventory inventory = new RoomInventory();
-        BillingService billingService = new BillingService();
+        BillingService billing = new BillingService();
+        ReportGenerator reportGenerator = new ReportGenerator();
 
-        // Define Room Pricing
-        Map<String, Room> roomDefinitions = new HashMap<>();
-        roomDefinitions.put("Single", new Room("Single Room", 1500.0));
-        roomDefinitions.put("Double", new Room("Double Room", 2500.0));
-        roomDefinitions.put("Suite", new Room("Suite Room", 5000.0));
+        // 2. Simulate some business activity (Bookings)
+        // Guest 1: Abhi books Single ($1500)
+        inventory.updateAvailability("Single", 4);
+        billing.processPayment(1500.0);
 
-        // 2. Create Booking Requests
-        List<Reservation> requests = new ArrayList<>();
-        requests.add(new Reservation("Abhi", "Single"));
-        requests.add(new Reservation("Subha", "Double"));
-        requests.add(new Reservation("Vanmathi", "Suite"));
+        // Guest 2: Subha books Double ($2500)
+        inventory.updateAvailability("Double", 2);
+        billing.processPayment(2500.0);
 
-        // 3. Process Bookings and Billing
-        for (Reservation request : requests) {
-            String type = request.getRoomType();
-            int currentStock = inventory.getRoomAvailability().getOrDefault(type, 0);
+        // Guest 3: Vanmathi books Suite ($5000)
+        inventory.updateAvailability("Suite", 1);
+        billing.processPayment(5000.0);
 
-            if (currentStock > 0) {
-                // Update Inventory
-                inventory.updateAvailability(type, currentStock - 1);
-
-                // Generate Bill
-                Room roomDetail = roomDefinitions.get(type);
-                billingService.generateBill(request.getGuestName(), roomDetail);
-            }
-        }
-
-        // 4. Final Revenue Report
-        System.out.println("\n-------------------------------");
-        System.out.println("Total Hotel Revenue: $" + billingService.getTotalRevenue());
-        System.out.println("-------------------------------");
+        // 3. Generate Reports (Matches Screenshot Logic)
+        reportGenerator.generateFinalSummary(inventory, billing);
     }
 }
